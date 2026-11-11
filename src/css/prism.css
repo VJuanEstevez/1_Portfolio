@@ -574,6 +574,12 @@ html.js {
   color: var(--acento, var(--acento-3));
 }
 
+.tarjeta__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--esp-2) var(--esp-4);
+}
+
 .tarjeta__enlace {
   justify-self: start;
   min-height: 2.75rem;
