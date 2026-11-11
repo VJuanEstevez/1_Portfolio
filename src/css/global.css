@@ -1,0 +1,501 @@
+/* ============================================================
+   global.css — reset, variables, base y componentes de página
+   ============================================================ */
+
+:root {
+  color-scheme: dark;
+
+  /* --- Color --- */
+  --fondo: #0b0b12;
+  --superficie: #12121d;
+  --superficie-alta: #171725;
+  --borde: #2c2c40;
+  --tinta: #f4f4fa;
+  --tinta-suave: #b8b8cc;
+
+  --acento-1: #c4b5fd; /* Inicio    */
+  --acento-2: #67e8f9; /* Sobre Mí  */
+  --acento-3: #fcd34d; /* Proyectos */
+  --acento-4: #86efac; /* Contacto  */
+
+  /* --- Tipografía --- */
+  --fuente-titulo: "Space Grotesk", system-ui, "Segoe UI", sans-serif;
+  --fuente-texto: "Inter", system-ui, "Segoe UI", sans-serif;
+
+  --texto-xs: 0.5rem;
+  --texto-sm: 0.6rem;
+  --texto-base: 0.75rem;
+  --texto-md: 1rem;
+  --texto-lg: clamp(1.25rem, 2vw, 1.5rem);
+  --texto-h2: clamp(1.75rem, 4vw, 2.75rem);
+  --texto-h1: clamp(2.5rem, 7vw, 8.75rem);
+
+  /* --- Espaciado (rem) — escala doblada para dejar más aire entre bloques --- */
+  --esp-1: 0.5rem;
+  --esp-2: 1rem;
+  --esp-3: 1.5rem;
+  --esp-4: 2rem;
+  --esp-5: 3rem;
+  --esp-6: 4rem;
+  --esp-7: 6rem;
+  --esp-8: 8rem;
+
+  /* --- Escena 3D --- */
+  --cara-ancho: min(70vw, 96rem);
+  --cara-alto: clamp(18rem, 66vh, 44rem);
+  --perspectiva: 200rem;
+  --progreso: 0;
+
+  /* --- Movimiento --- */
+  --dur: 280ms;
+  --suave: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* --- Reset --- */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100vh;
+  font-family: var(--fuente-texto);
+  font-size: var(--texto-base);
+  line-height: 1.6;
+  color: var(--tinta);
+  background-color: var(--fondo);
+  background-image:
+    radial-gradient(70rem 45rem at 12% -10%, rgb(124 58 237 / 16%), transparent 65%),
+    radial-gradient(60rem 40rem at 95% 110%, rgb(8 145 178 / 14%), transparent 65%);
+  background-attachment: fixed;
+  /* Recorta el sangrado horizontal de la caja 3D sin crear scroll
+     (overflow-x: clip no rompe position: sticky) */
+  overflow-x: clip;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+/* Sprite de iconos: los <symbol> solo se usan vía <use> */
+.sprite {
+  display: none;
+}
+
+.icono {
+  inline-size: 1.15em;
+  block-size: 1.15em;
+  flex: none;
+  color: inherit;
+}
+
+ul,
+ol {
+  list-style: none;
+  padding: 0;
+}
+
+a {
+  color: inherit;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--fuente-titulo);
+  line-height: 1.1;
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+/* Grano sutil sobre toda la página (estático, sin animación) */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* --- Foco visible (WCAG 2.4.7) --- */
+
+:focus-visible {
+  outline: 3px solid var(--acento-1);
+  outline-offset: 3px;
+  border-radius: var(--esp-1);
+}
+
+/* Destinos de navegación interna: el foco ya está sobre el contenido visible */
+main:focus,
+.cara:focus {
+  outline: none;
+}
+
+/* --- Enlace de salto --- */
+
+.saltar {
+  position: fixed;
+  top: var(--esp-3);
+  left: var(--esp-3);
+  z-index: 60;
+  padding: var(--esp-3) var(--esp-5);
+  font-weight: 600;
+  color: var(--fondo);
+  background: var(--acento-1);
+  border-radius: 999px;
+  text-decoration: none;
+  transform: translateY(calc(-100% - var(--esp-5)));
+  transition: transform var(--dur) var(--suave);
+}
+
+.saltar:focus-visible {
+  transform: translateY(0);
+}
+
+/* --- Cabecera fija --- */
+
+.cabecera {
+  position: fixed;
+  top: 0;
+  inset-inline: 0;
+  z-index: 20;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--esp-3) var(--esp-5);
+  padding: var(--esp-2) clamp(var(--esp-3), 4vw, var(--esp-6));
+  background: rgb(11 11 18 / 82%);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgb(255 255 255 / 8%);
+}
+
+.marca {
+  font-family: var(--fuente-titulo);
+  font-size: var(--texto-md);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+}
+
+.marca__punto {
+  color: var(--acento-1);
+}
+
+/* --- Menú de navegación (drawer en móvil) --- */
+
+/* Escritorio: el <details> queda siempre abierto y el conmutador no se ve */
+.drawer__boton {
+  display: none;
+  list-style: none;
+}
+
+.drawer__boton::-webkit-details-marker {
+  display: none;
+}
+
+.drawer__boton::marker {
+  content: "";
+}
+
+.menu__lista {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--esp-1);
+}
+
+.menu__enlace {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem; /* 44px — WCAG 2.5.8 */
+  padding: var(--esp-2) var(--esp-3);
+  font-size: clamp(var(--texto-xs), 2.5vw, var(--texto-base));
+  font-weight: 500;
+  color: var(--tinta-suave);
+  text-decoration: none;
+  border-radius: var(--esp-2);
+  transition:
+    color var(--dur) var(--suave),
+    background-color var(--dur) var(--suave);
+
+  &::after {
+    content: "";
+    position: absolute;
+    left: var(--esp-3);
+    right: var(--esp-3);
+    bottom: 0.3rem;
+    height: 0.15rem;
+    border-radius: 999px;
+    background: var(--acento, var(--acento-1));
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform var(--dur) var(--suave);
+  }
+
+  &:hover {
+    color: var(--tinta);
+    background: rgb(255 255 255 / 6%);
+  }
+
+  &.activo {
+    color: var(--tinta);
+    font-weight: 600;
+
+    &::after {
+      transform: scaleX(1);
+    }
+  }
+}
+
+/* Un acento distinto por sección, igual que en las caras */
+.menu__enlace--1 {
+  --acento: var(--acento-1);
+}
+
+.menu__enlace--2 {
+  --acento: var(--acento-2);
+}
+
+.menu__enlace--3 {
+  --acento: var(--acento-3);
+}
+
+.menu__enlace--4 {
+  --acento: var(--acento-4);
+}
+
+/* --- Drawer en pantallas pequeñas --- */
+
+@media (max-width: 56rem) {
+  .drawer__boton {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--esp-2);
+    min-height: 2.75rem; /* 44px — WCAG 2.5.8 */
+    padding: var(--esp-2) var(--esp-3);
+    font-family: var(--fuente-titulo);
+    font-size: var(--texto-sm);
+    font-weight: 600;
+    color: var(--tinta);
+    background: rgb(255 255 255 / 6%);
+    border: 1px solid var(--borde);
+    border-radius: var(--esp-2);
+    cursor: pointer;
+    transition:
+      color var(--dur) var(--suave),
+      border-color var(--dur) var(--suave);
+
+    &:hover {
+      color: var(--tinta);
+      border-color: var(--acento-1);
+    }
+  }
+
+  /* Hamburguesa mientras está cerrado, X mientras está desplegado */
+  .icono--cerrar {
+    display: none;
+  }
+
+  .drawer[open] .icono--abrir {
+    display: none;
+  }
+
+  .drawer[open] .icono--cerrar {
+    display: block;
+  }
+
+  /* El panel cae bajo la cabecera: la cabecera fija es su bloque contenedor */
+  .drawer[open] > .menu {
+    position: absolute;
+    top: 100%;
+    inset-inline: 0;
+    padding: var(--esp-3);
+    background: rgb(11 11 18 / 96%);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgb(255 255 255 / 10%);
+    box-shadow: 0 1.5rem 3rem rgb(0 0 0 / 45%);
+    animation: drawer-entra var(--dur) var(--suave);
+  }
+
+  .drawer[open] .menu__lista {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--esp-1);
+  }
+
+  .drawer[open] .menu__enlace {
+    display: flex;
+    min-height: 3rem;
+    padding: var(--esp-2) var(--esp-3);
+    font-size: var(--texto-base);
+  }
+}
+
+@keyframes drawer-entra {
+  from {
+    opacity: 0;
+    transform: translateY(-0.75rem);
+  }
+}
+
+/* --- Contenido de página --- */
+
+main {
+  display: block;
+}
+
+.etiqueta {
+  font-family: var(--fuente-titulo);
+  font-size: var(--texto-xs);
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--acento, var(--acento-1));
+}
+
+.titulo {
+  font-size: var(--texto-h2);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.titulo--display {
+  font-size: var(--texto-h1);
+  line-height: 1.02;
+}
+
+.rol {
+  font-family: var(--fuente-titulo);
+  font-size: var(--texto-lg);
+  font-weight: 600;
+  color: var(--acento, var(--acento-1));
+}
+
+.lead {
+  max-width: 46ch;
+  font-size: var(--texto-md);
+  color: var(--tinta-suave);
+}
+
+/* --- Typewriter: reveal carácter a carácter (solo con JS) ---
+   Los spans los crea typewriter.js y ocupan su sitio desde el inicio,
+   así que el párrafo no cambia de tamaño (sin salto de layout). */
+.js .lead span,
+.js .sobre__texto p span {
+  opacity: 0;
+}
+
+.lead.escribiendo span,
+.sobre__texto p.escribiendo span {
+  opacity: 1;
+  transition: opacity 80ms linear;
+  transition-delay: calc(var(--pausa) + var(--i) * var(--paso));
+}
+
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--esp-4);
+}
+
+.boton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6em;
+  min-height: 2.75rem;
+  padding: var(--esp-3) var(--esp-5);
+  font-family: var(--fuente-titulo);
+  font-size: var(--texto-sm);
+  font-weight: 600;
+  color: var(--tinta);
+  text-decoration: none;
+  border: 1px solid var(--borde);
+  border-radius: 999px;
+  transition:
+    transform var(--dur) var(--suave),
+    border-color var(--dur) var(--suave),
+    background-color var(--dur) var(--suave);
+
+  &:hover {
+    transform: translateY(-2px);
+    border-color: var(--acento, var(--acento-1));
+    background: rgb(255 255 255 / 6%);
+  }
+}
+
+.boton--solido {
+  color: #101018;
+  background: var(--acento, var(--acento-1));
+  border-color: transparent;
+
+  &:hover {
+    background: var(--acento, var(--acento-1));
+    filter: brightness(1.08);
+  }
+}
+
+.pista {
+  font-size: var(--texto-sm);
+  color: var(--tinta-suave);
+  animation: latido 2.4s ease-in-out infinite;
+}
+
+@keyframes latido {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.7;
+  }
+
+  50% {
+    transform: translateY(0.35rem);
+    opacity: 1;
+  }
+}
+
+/* --- Pie --- */
+
+.pie {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--esp-3);
+  padding: var(--esp-6) clamp(var(--esp-4), 4vw, var(--esp-7));
+  font-size: var(--texto-sm);
+  color: var(--tinta-suave);
+  background: rgb(11 11 18 / 92%);
+  border-top: 1px solid var(--borde);
+}
+
+/* --- Movimiento reducido (WCAG 2.3.3) --- */
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "name": "1_portfolio",
+  "version": "1.0.0",
+  "description": "Portfolio Juan Estevez 2026",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "oxlint src/",
+    "format": "oxfmt src/",
+    "deploy": "pnpm run build && gh-pages -d dist"
+  },
+  "keywords": [
+    "html",
+    "javascript",
+    "Portfolio"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "12.18.0",
+      "onFail": "download"
+    }
+  },
+  "packageManager": "pnpm@12.18.0",
+  "type": "module",
+  "devDependencies": {
+    "gh-pages": "^6.3.0",
+    "oxfmt": "^0.77.0",
+    "oxlint": "^1.92.0",
+    "vite": "^8.3.6"
+  }
+}

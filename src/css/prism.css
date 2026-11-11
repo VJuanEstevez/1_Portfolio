@@ -1,0 +1,705 @@
+/* ============================================================
+   prism.css — escena 3D: track, caras y snap
+   Por defecto (sin JS) las secciones se apilan en flujo normal.
+   Con la clase .js en <html> se activa el rectángulo 3D.
+   ============================================================ */
+
+/* Ángulo registrado para poder animar el degradado cónico del borde.
+   Sin soporte de @property el anillo se dibuja estático (valor inicial). */
+@property --angulo-brillo {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.track {
+  position: relative;
+}
+
+.escena {
+  display: grid;
+  place-items: center;
+}
+
+.prism {
+  position: relative;
+  counter-reset: cara;
+}
+
+/* --- Caras (modo apilado, base) --- */
+
+.cara {
+  position: relative;
+  counter-increment: cara;
+  --angulo-brillo: 0deg;
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-4);
+  width: min(100%, var(--cara-ancho));
+  min-height: 22rem;
+  margin-inline: auto;
+  padding: clamp(var(--esp-5), 4vw, var(--esp-7));
+  isolation: isolate; /* el número fantasma queda dentro de la cara */
+  background:
+    radial-gradient(45rem 30rem at 12% 15%, rgb(255 255 255 / 7%), transparent 70%),
+    radial-gradient(
+      40rem 28rem at 88% 85%,
+      color-mix(in oklab, var(--acento) 12%, transparent),
+      transparent 70%
+    ),
+    linear-gradient(160deg, var(--superficie-alta), var(--fondo));
+  border: 1px solid color-mix(in oklab, var(--acento) 32%, var(--borde));
+  border-radius: 1.5rem;
+  overflow: hidden;
+
+  /* Centrado seguro: si el contenido desborda, el scroll empieza arriba */
+  > :first-child {
+    margin-block-start: auto;
+  }
+
+  > :last-child {
+    margin-block-end: auto;
+  }
+
+  /* Número fantasma de la cara */
+  &::before {
+    content: counter(cara, decimal-leading-zero);
+    position: absolute;
+    right: var(--esp-5);
+    bottom: 0;
+    z-index: -1;
+    font-family: var(--fuente-titulo);
+    font-size: clamp(6rem, 16vh, 11rem);
+    font-weight: 700;
+    line-height: 1;
+    color: transparent;
+    -webkit-text-stroke: 1px color-mix(in oklab, var(--acento) 45%, transparent);
+    opacity: 0.55;
+    pointer-events: none;
+  }
+
+  /* Borde con resplandor viajante: máscara de 2px sobre el borde interior.
+     z-index negativo: por encima del fondo de la cara, por debajo del texto. */
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    padding: 2px;
+    border-radius: inherit;
+    background: conic-gradient(
+      from var(--angulo-brillo),
+      transparent 0deg 300deg,
+      color-mix(in oklab, var(--acento) 55%, transparent) 340deg,
+      color-mix(in oklab, var(--acento) 85%, white) 355deg,
+      transparent 360deg
+    );
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    animation: girar-brillo 6s linear infinite;
+    pointer-events: none;
+  }
+}
+
+@keyframes girar-brillo {
+  to {
+    --angulo-brillo: 360deg;
+  }
+}
+
+.cara + .cara {
+  margin-top: var(--esp-6);
+}
+
+.cara--1 {
+  --acento: var(--acento-1);
+}
+
+.cara--2 {
+  --acento: var(--acento-2);
+}
+
+.cara--3 {
+  --acento: var(--acento-3);
+}
+
+.cara--4 {
+  --acento: var(--acento-4);
+}
+
+/* Marcadores de snap: nunca visibles sin JS */
+.marcador {
+  display: none;
+}
+
+/* ============================================================
+   Modo 3D (solo con JS)
+   ============================================================ */
+
+.js {
+  /* la escena sticky aporta 100vh; los 4 marcadores suman 400vh */
+  .escena {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    margin-bottom: -100vh;
+    perspective: var(--perspectiva);
+    perspective-origin: 50% 45%;
+  }
+
+  .prism {
+    width: var(--cara-ancho);
+    height: var(--cara-alto);
+    transform-style: preserve-3d;
+    transform: rotateX(calc(var(--progreso) * 270deg));
+
+    /* Caras laterales: cierran la caja (cuadradas, lado = alto de la cara) */
+    &::before,
+    &::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: var(--cara-alto);
+      height: var(--cara-alto);
+      margin-top: calc(var(--cara-alto) / -2);
+      margin-left: calc(var(--cara-alto) / -2);
+      backface-visibility: hidden;
+      background: linear-gradient(180deg, var(--superficie-alta), var(--superficie));
+      border: 1px solid var(--borde);
+      border-radius: var(--esp-4);
+    }
+
+    &::before {
+      transform: rotateY(90deg) translateZ(calc(var(--cara-ancho) / 2));
+    }
+
+    &::after {
+      transform: rotateY(-90deg) translateZ(calc(var(--cara-ancho) / 2));
+    }
+
+    /* Laterales decorativos: nunca interceptan clics (girando, barren
+       la pantalla y podrían robar el evento a las caras) */
+    &::before,
+    &::after {
+      pointer-events: none;
+    }
+  }
+
+  .cara {
+    position: absolute;
+    inset: 0;
+    width: auto;
+    min-height: 0;
+    margin: 0;
+    backface-visibility: hidden;
+    transition: box-shadow var(--dur) var(--suave);
+    /* Si el contenido no cabe (pantallas pequeñas), la cara hace scroll
+       y encadena con el de la página para seguir girando */
+    overflow-x: hidden;
+    overflow-y: auto;
+
+    /* Fade-in: el contenido de la cara entra al girar a su frontal.
+       Solo en modo 3D: sin JS (o con reduced-motion) todo es visible. */
+    .cara__cuerpo,
+    .cara__media {
+      opacity: 0;
+      transform: translateY(1.25rem);
+      transition:
+        opacity 700ms var(--suave),
+        transform 700ms var(--suave);
+    }
+
+    &.activa .cara__cuerpo,
+    &.activa .cara__media {
+      opacity: 1;
+      transform: none;
+    }
+
+    /* Brillo suave en la cara que está de frente */
+    &.activa {
+      box-shadow: 0 0 5rem color-mix(in oklab, var(--acento) 30%, transparent);
+    }
+
+    /* El resplandor solo avanza en la cara visible: menos repintado */
+    &:not(.activa)::after {
+      animation-play-state: paused;
+    }
+
+    /* Orden vertical: el contenido entra desde abajo al hacer scroll */
+    &:nth-child(1) {
+      transform: rotateX(0deg) translateZ(calc(var(--cara-alto) / 2));
+    }
+
+    &:nth-child(2) {
+      transform: rotateX(-90deg) translateZ(calc(var(--cara-alto) / 2));
+    }
+
+    &:nth-child(3) {
+      transform: rotateX(-180deg) translateZ(calc(var(--cara-alto) / 2));
+    }
+
+    &:nth-child(4) {
+      transform: rotateX(-270deg) translateZ(calc(var(--cara-alto) / 2));
+    }
+  }
+
+  .marcador {
+    display: block;
+    height: 100vh;
+    scroll-snap-align: start;
+    pointer-events: none;
+  }
+}
+
+/* Snap suave en el scroll del documento */
+html.js {
+  scroll-snap-type: y proximity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.js {
+    scroll-snap-type: none;
+  }
+}
+
+/* ============================================================
+   Contenido dentro de las caras
+   ============================================================ */
+
+/* --- Caras con imagen lateral: 30% del ancho, 100% del alto --- */
+
+.cara--media {
+  --media-ancho: 30%;
+  display: grid;
+  grid-template-columns: 1fr var(--media-ancho);
+  gap: clamp(var(--esp-3), 2.5vw, var(--esp-5));
+  padding: clamp(var(--esp-4), 3vw, var(--esp-7));
+}
+
+/* Imagen a la izquierda: la figura ocupa la primera columna aunque
+   el texto vaya antes en el DOM (orden de lectura intacto). */
+.cara--media-izq {
+  grid-template-columns: var(--media-ancho) 1fr;
+}
+
+.cara--media-izq > .cara__media {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.cara--media-izq > .cara__cuerpo {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+/* El número fantasma se libra de la columna de imagen */
+.cara--media:not(.cara--media-izq)::before {
+  right: auto;
+  left: var(--esp-5);
+}
+
+/* El centrado por márgenes automáticos se traslada al cuerpo:
+   la imagen debe estirarse al 100% de la fila. */
+.cara--media > :first-child,
+.cara--media > :last-child {
+  margin-block: 0;
+}
+
+/* El texto vive en el 70% de la cara: los títulos se escalan para
+   no desbordar su columna (el ancho útil crece más despacio que 7vw). */
+.cara--media .titulo {
+  font-size: clamp(1.375rem, 5vw, var(--texto-h2));
+}
+
+.cara--media .titulo--display {
+  font-size: clamp(1.125rem, 5.4vw, var(--texto-h1));
+}
+
+.cara__cuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-4);
+  min-inline-size: 0;
+  min-block-size: 0;
+
+  /* Centrado seguro: si el contenido desborda, el scroll empieza arriba */
+  > :first-child {
+    margin-block-start: auto;
+  }
+
+  > :last-child {
+    margin-block-end: auto;
+  }
+}
+
+.cara__media {
+  position: relative;
+  min-inline-size: 0;
+  margin: 0;
+  overflow: hidden;
+  background: var(--superficie);
+  border: 1px solid color-mix(in oklab, var(--acento) 25%, var(--borde));
+  border-radius: var(--esp-4);
+
+  img {
+    position: absolute;
+    inset: 0;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+  }
+}
+
+/* ============================================================
+   Pantallas medianas y pequeñas: la imagen pasa debajo del texto,
+   a ancho completo y con su proporción natural (sin recortar).
+   Va después de las reglas base para ganarles a igualdad.
+   ============================================================ */
+
+@media (max-width: 48rem) {
+  .cara--media,
+  .cara--media-izq {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* El DOM ya va cuerpo → figura: en una sola columna, la imagen
+     queda debajo del texto sin necesidad de orden explícito. */
+  .cara--media-izq > .cara__media,
+  .cara--media-izq > .cara__cuerpo {
+    grid-column: auto;
+    grid-row: auto;
+  }
+
+  .cara__media img {
+    position: static;
+    inset: auto;
+    inline-size: 100%;
+    block-size: auto;
+    aspect-ratio: auto; /* proporción natural 900 × 1400 */
+    object-fit: contain;
+  }
+}
+
+.sobre {
+  display: grid;
+  gap: var(--esp-5);
+  align-items: start;
+
+  @media (min-width: 52rem) {
+    grid-template-columns: 1.2fr 1fr;
+    gap: var(--esp-5); /* esp-7 (6rem) partía la cara en dos */
+  }
+}
+
+.sobre__texto {
+  display: grid;
+  gap: var(--esp-4);
+  color: var(--tinta-suave);
+  max-width: 52ch;
+}
+
+.sobre__datos {
+  display: grid;
+  gap: var(--esp-4);
+}
+
+/* --- Text Rotator de habilidades: una línea que rota (CSS puro) --- */
+
+.rodillo {
+  --rodillo-fila: 2.75rem;
+  --rodillo-dur: 12s; /* 6 habilidades × 2s por turno */
+
+  position: relative;
+  block-size: var(--rodillo-fila);
+  overflow: hidden;
+  background: rgb(255 255 255 / 4%);
+  border: 1px solid color-mix(in oklab, var(--acento) 28%, var(--borde));
+  border-radius: var(--esp-4);
+}
+
+.rodillo__lista li {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--esp-2);
+  font-family: var(--fuente-titulo);
+  font-size: var(--texto-sm);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--tinta);
+  opacity: 0;
+  animation: rotar-habilidad var(--rodillo-dur) infinite;
+}
+
+/* Un turno por habilidad: entran desde abajo, se quedan, salen arriba.
+   La superposición entre turno y turno hace el fundido. */
+.rodillo__lista li:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.rodillo__lista li:nth-child(2) {
+  animation-delay: calc(var(--rodillo-dur) / 6);
+}
+
+.rodillo__lista li:nth-child(3) {
+  animation-delay: calc(var(--rodillo-dur) / 6 * 2);
+}
+
+.rodillo__lista li:nth-child(4) {
+  animation-delay: calc(var(--rodillo-dur) / 6 * 3);
+}
+
+.rodillo__lista li:nth-child(5) {
+  animation-delay: calc(var(--rodillo-dur) / 6 * 4);
+}
+
+.rodillo__lista li:nth-child(6) {
+  animation-delay: calc(var(--rodillo-dur) / 6 * 5);
+}
+
+@keyframes rotar-habilidad {
+  0% {
+    opacity: 0;
+    transform: translateY(0.75rem);
+  }
+
+  8%,
+  16% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  25%,
+  100% {
+    opacity: 0;
+    transform: translateY(-0.75rem);
+  }
+}
+
+/* Movimiento reducido: el rotator se detiene y muestra la lista completa.
+   Va después de las reglas base para ganarles a igualdad. */
+@media (prefers-reduced-motion: reduce) {
+  .rodillo {
+    block-size: auto;
+  }
+
+  .rodillo__lista {
+    display: grid;
+    gap: var(--esp-1);
+    padding-block: var(--esp-2);
+  }
+
+  .rodillo__lista li {
+    position: static;
+    opacity: 1;
+    animation: none;
+    transform: none;
+  }
+}
+
+.datos {
+  display: grid;
+  gap: var(--esp-3);
+
+  div {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--esp-4);
+    padding-bottom: var(--esp-3);
+    border-bottom: 1px solid var(--borde);
+  }
+
+  dt {
+    color: var(--tinta-suave);
+  }
+
+  dd {
+    font-family: var(--fuente-titulo);
+    font-weight: 600;
+    color: var(--acento, var(--acento-2));
+  }
+}
+
+/* --- Rejilla de proyectos --- */
+
+.rejilla {
+  display: grid;
+  gap: var(--esp-4);
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+}
+
+.tarjeta {
+  display: grid;
+  gap: var(--esp-2);
+  align-content: start;
+  padding: var(--esp-4);
+  background: rgb(255 255 255 / 5%);
+  border: 1px solid var(--borde);
+  border-radius: var(--esp-5);
+  transition:
+    transform var(--dur) var(--suave),
+    border-color var(--dur) var(--suave);
+
+  &:hover {
+    transform: translateY(-3px);
+    border-color: color-mix(in oklab, var(--acento) 55%, var(--borde));
+  }
+
+  h3 {
+    font-size: var(--texto-md);
+    font-weight: 600;
+  }
+
+  p {
+    font-size: var(--texto-sm);
+    color: var(--tinta-suave);
+  }
+}
+
+.tarjeta .tarjeta__tech {
+  font-family: var(--fuente-titulo);
+  font-size: var(--texto-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--acento, var(--acento-3));
+}
+
+.tarjeta__enlace {
+  justify-self: start;
+  min-height: 2.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  font-size: var(--texto-sm);
+  font-weight: 600;
+  color: var(--tinta);
+  text-decoration-color: var(--acento, var(--acento-3));
+  text-underline-offset: 0.25em;
+
+  &:hover {
+    color: var(--acento, var(--acento-3));
+  }
+}
+
+/* --- Contacto --- */
+
+.enlaces {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--esp-5);
+
+  a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5em;
+    min-height: 2.75rem;
+    font-family: var(--fuente-titulo);
+    font-weight: 600;
+    color: var(--tinta);
+    text-decoration-color: var(--acento, var(--acento-4));
+    text-underline-offset: 0.3em;
+
+    &:hover {
+      color: var(--acento, var(--acento-4));
+    }
+  }
+}
+
+/* ============================================================
+   Viewports cortos (ventanas bajas / móviles apaisados)
+   ============================================================ */
+
+@media (max-height: 34rem) {
+  :root {
+    --cara-alto: 64vh;
+  }
+
+  /* Espaciado acotado: en pantallas bajas manda el aire del contenido */
+  .cara {
+    gap: var(--esp-3);
+    padding: var(--esp-4);
+  }
+
+  .cara--media {
+    gap: var(--esp-3);
+    padding: var(--esp-4);
+  }
+
+  .cara__cuerpo {
+    gap: var(--esp-3);
+  }
+
+  .titulo--display {
+    font-size: clamp(2rem, 6vw, 3rem);
+  }
+
+  .pista {
+    display: none;
+  }
+}
+
+/* ============================================================
+   Pantallas pequeñas: densidad máxima dentro de la cara
+   ============================================================ */
+
+@media (max-width: 34rem) {
+  /* El prisma es de 70vw y la imagen ocupa el 30%: se acota el
+     espaciado para devolver densidad al contenido de cada cara. */
+  .cara {
+    gap: var(--esp-3);
+    padding: var(--esp-4) var(--esp-3);
+  }
+
+  .cara--media {
+    gap: var(--esp-3);
+    padding: var(--esp-4) var(--esp-3);
+  }
+
+  .cara__cuerpo {
+    gap: var(--esp-3);
+  }
+
+  .boton {
+    justify-content: center;
+    max-inline-size: 100%;
+    padding-inline: var(--esp-3);
+    overflow-wrap: anywhere;
+    text-align: center;
+  }
+
+  .rejilla {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--esp-2);
+  }
+
+  .tarjeta {
+    gap: var(--esp-1);
+    padding: var(--esp-2);
+
+    h3 {
+      font-size: var(--texto-base);
+    }
+
+    p {
+      font-size: var(--texto-xs);
+    }
+  }
+
+  .tarjeta__enlace {
+    min-height: 1.5rem; /* 24px — mínimo AA (WCAG 2.5.8) */
+  }
+
+  .enlaces {
+    gap: var(--esp-3);
+  }
+}
